@@ -1,0 +1,153 @@
+# deploy-kit Project Intent for hindsight: the agent memory api and its worker, the control
+# plane, and the two TEI models they embed and rerank with, each built by this repository to
+# run as a numeric non-root user under a read-only root filesystem.
+#
+# Memories are in hindsight_db on the platform's Postgres; the only volumes are TEI's model
+# caches, which a restart downloads again. The reranker runs on CPU until deploy-kit renders a
+# GPU request (JorisJonkers-dev/deploy-kit#398).
+
+apiVersion: intent.jorisjonkers.dev/v1
+kind: Project
+schemaVersion: 1.0.0
+
+project: hindsight # the namespace derives: hindsight-system; the database: hindsight_db
+owner: joris
+
+applications:
+  - id: hindsight
+    migration: self # the api applies its pending migrations on start
+    # Agents reach the MCP endpoints and the bank API through the edge with a service token;
+    # each host serves one bank and nothing else.
+    exposure:
+      - name: api
+        host: hindsight-api.jorisjonkers.dev
+        audience: authenticated
+        routes:
+          - { path: /mcp/default, match: exact, process: hindsight-api, surface: http }
+          - { path: /mcp/default/, match: prefix, process: hindsight-api, surface: http }
+          - { path: /v1/default/banks/default/, match: prefix, process: hindsight-api, surface: http }
+      - name: private
+        host: hindsight-private.jorisjonkers.dev
+        audience: authenticated
+        routes:
+          - { path: /mcp/private, match: exact, process: hindsight-api, surface: http }
+          - { path: /mcp/private/, match: prefix, process: hindsight-api, surface: http }
+          - { path: /v1/default/banks/private/, match: prefix, process: hindsight-api, surface: http }
+
+    dependsOn:
+      - application: platform-postgres
+        surface: postgres
+        credentials: { delivery: env, rotation: { tolerates: restart } }
+      - { application: hindsight-embedding, surface: http }
+      - { application: hindsight-reranker, surface: http }
+    secrets:
+      # The LLM key that extracts facts and writes observations, where the old path keeps it.
+      - path: secret/data/platform/hindsight
+        keys: [mistral_api_key]
+        access: read
+        delivery: env
+        rotation: { tolerates: restart }
+    writablePaths: [/tmp]
+    startupBudget: 300s # the api migrates the schema before it serves
+    cutover: continuous
+
+    processes:
+      - name: hindsight-api
+        lifecycle: application
+        image: hindsight # this repository's image, started as the api; the lock resolves digest, uid and gid
+        runtime: none
+        provides:
+          http: 8888
+        placement:
+          memory: 1536Mi # the live pod uses about 500Mi
+          cpu: 500m
+        probes:
+          readiness: { path: /health, port: 8888 }
+          liveness: { path: /health/live, port: 8888 }
+
+      - name: hindsight-worker
+        lifecycle: application
+        image: hindsight # the same image, started as the worker
+        runtime: none
+        provides:
+          worker: 8889
+        placement:
+          memory: 1536Mi # the live pod uses about 500Mi
+          cpu: 500m
+        probes:
+          readiness: { path: /health, port: 8889 }
+          liveness: { path: /health, port: 8889 }
+
+  - id: hindsight-control-plane
+    exposure:
+      - name: public
+        host: hindsight.jorisjonkers.dev
+        audience: authenticated
+        routes:
+          - { path: /, match: prefix, process: hindsight-control-plane, surface: http }
+    processes:
+      - name: hindsight-control-plane
+        lifecycle: application
+        image: hindsight-control-plane
+        runtime: none
+        provides:
+          http: 3000
+        dependsOn:
+          - { application: hindsight, surface: http }
+        placement:
+          memory: 256Mi # the live pod uses about 75Mi
+          cpu: 100m
+        writablePaths: [/tmp]
+        probes:
+          readiness: { tcp: 3000 }
+          liveness: { tcp: 3000 }
+        startupBudget: 60s
+        cutover: continuous
+
+  - id: hindsight-embedding
+    processes:
+      - name: tei-embedding
+        lifecycle: application
+        image: hindsight-tei # TEI on CPU, serving BAAI/bge-m3
+        runtime: none
+        provides:
+          http: 8091
+        placement:
+          memory: 4Gi # the live pod uses about 2.8Gi
+          cpu: 2000m
+          arch: [amd64] # TEI's CPU image is published for amd64 only
+        writablePaths: [/tmp]
+        probes:
+          readiness: { path: /health, port: 8091 }
+          liveness: { path: /health, port: 8091 }
+        startupBudget: 900s # a first start downloads the model
+        cutover: interrupted # one pod on a ReadWriteOnce cache
+        volumes:
+          - claim: tei-embedding-models
+            mountAt: /data
+            size: 8Gi
+            durability: reconstructible # the model downloads again
+
+  - id: hindsight-reranker
+    processes:
+      - name: tei-reranker
+        lifecycle: application
+        image: hindsight-tei # TEI on CPU, serving the mmarco cross-encoder
+        runtime: none
+        provides:
+          http: 8092
+        placement:
+          memory: 1536Mi
+          cpu: 1000m
+          arch: [amd64] # TEI's CPU image is published for amd64 only
+        writablePaths: [/tmp]
+        probes:
+          readiness: { path: /health, port: 8092 }
+          liveness: { path: /health, port: 8092 }
+        startupBudget: 600s # a first start downloads the model
+        cutover: interrupted # one pod on a ReadWriteOnce cache
+        volumes:
+          - claim: tei-reranker-models
+            mountAt: /data
+            size: 2Gi
+            durability: reconstructible # the model downloads again

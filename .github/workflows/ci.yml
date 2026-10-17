@@ -1,0 +1,65 @@
+# Lint and the restricted smoke test run in parallel; "Pipeline Complete" is the required check.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Lint shell scripts
+        run: shellcheck api/hindsight-start control-plane/control-plane-start scripts/*.sh
+
+      - name: Download actionlint
+        id: actionlint
+        shell: bash
+        run: bash <(curl --fail --silent --show-error --location https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+
+      - name: Lint GitHub Actions workflows
+        run: '"${{ steps.actionlint.outputs.executable }}" -color .github/workflows/*.yml'
+
+  # Every image as the estate runs it: uid 1000, a read-only root, every capability dropped,
+  # and only the paths the Project declares writable.
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build the images
+        run: |
+          docker build -t hindsight:ci api
+          docker build -t hindsight-control-plane:ci control-plane
+          docker build -t hindsight-tei:ci tei
+
+      - name: Start every image under the restricted posture
+        run: scripts/smoke-test.sh hindsight:ci hindsight-control-plane:ci hindsight-tei:ci
+
+  pipeline-complete:
+    name: Pipeline Complete
+    if: ${{ always() }}
+    needs: [lint, smoke]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every job to pass
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for result in $RESULTS; do
+            [ "$result" = success ] || { echo "::error::a required job ended $result"; exit 1; }
+          done

@@ -1,0 +1,10 @@
+#!/bin/sh
+# Serves the control plane alone. Upstream's start-all.sh first checks for an embedded
+# database directory under $HOME, which a read-only root does not have. The api's URL is built
+# from its host and port, which the estate delivers separately.
+set -eu
+export HINDSIGHT_CP_DATAPLANE_API_URL="http://${HINDSIGHT_DATAPLANE_HOST:?}:${HINDSIGHT_DATAPLANE_PORT:?}"
+export HOSTNAME="${HINDSIGHT_CP_HOSTNAME:-0.0.0.0}"
+export PORT="${HINDSIGHT_CP_PORT:-3000}"
+cd /app/control-plane
+exec node server.js

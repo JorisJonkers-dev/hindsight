@@ -1,0 +1,36 @@
+#!/bin/sh
+# Starts the api or the worker, chosen by HINDSIGHT_ROLE. The estate delivers a host and a port
+# as separate variables, so the database and TEI URLs are built from those parts here.
+set -eu
+
+for var in HINDSIGHT_DB_HOST HINDSIGHT_DB_PORT HINDSIGHT_DB_NAME HINDSIGHT_DB_USER HINDSIGHT_DB_PASSWORD; do
+  eval "value=\${$var:-}"
+  [ -n "$value" ] || { echo "hindsight-start: $var is not set" >&2; exit 1; }
+done
+
+quote() { python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$1"; }
+HINDSIGHT_API_DATABASE_URL="postgresql://$(quote "$HINDSIGHT_DB_USER"):$(quote "$HINDSIGHT_DB_PASSWORD")@${HINDSIGHT_DB_HOST}:${HINDSIGHT_DB_PORT}/${HINDSIGHT_DB_NAME}"
+export HINDSIGHT_API_DATABASE_URL
+
+if [ -n "${HINDSIGHT_EMBEDDINGS_HOST:-}" ]; then
+  export HINDSIGHT_API_EMBEDDINGS_TEI_URL="http://${HINDSIGHT_EMBEDDINGS_HOST}:${HINDSIGHT_EMBEDDINGS_PORT:?}"
+fi
+if [ -n "${HINDSIGHT_RERANKER_HOST:-}" ]; then
+  export HINDSIGHT_API_RERANKER_TEI_URL="http://${HINDSIGHT_RERANKER_HOST}:${HINDSIGHT_RERANKER_PORT:?}"
+fi
+
+case "${HINDSIGHT_ROLE:-api}" in
+  api)
+    export HINDSIGHT_API_WORKER_ENABLED=false HINDSIGHT_ENABLE_CP=false
+    exec /app/start-all.sh
+    ;;
+  worker)
+    HINDSIGHT_API_WORKER_ID="${HINDSIGHT_API_WORKER_ID:-$(hostname)}"
+    export HINDSIGHT_API_WORKER_ID
+    exec hindsight-worker
+    ;;
+  *)
+    echo "hindsight-start: HINDSIGHT_ROLE must be api or worker, not ${HINDSIGHT_ROLE}" >&2
+    exit 1
+    ;;
+esac
