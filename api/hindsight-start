@@ -19,6 +19,28 @@ if [ -n "${HINDSIGHT_RERANKER_HOST:-}" ]; then
   export HINDSIGHT_API_RERANKER_TEI_URL="http://${HINDSIGHT_RERANKER_HOST}:${HINDSIGHT_RERANKER_PORT:?}"
 fi
 
+# Both roles exit at startup if a TEI server does not answer within a few seconds, and every
+# release restarts TEI beside them. Waiting here turns that into a slower start rather than a
+# crash and a restart the Release Gate rolls back; the startup probe still bounds the wait.
+wait_for_tei() {
+  python3 - "$1" <<'PY'
+import sys, time, urllib.request
+url, waited = sys.argv[1] + "/health", 0
+while True:
+    try:
+        urllib.request.urlopen(url, timeout=3)
+        break
+    except Exception:
+        if waited % 30 == 0:
+            print(f"hindsight-start: waiting for {url}", file=sys.stderr, flush=True)
+        time.sleep(2)
+        waited += 2
+PY
+}
+for url in "${HINDSIGHT_API_EMBEDDINGS_TEI_URL:-}" "${HINDSIGHT_API_RERANKER_TEI_URL:-}"; do
+  [ -z "$url" ] || wait_for_tei "$url"
+done
+
 case "${HINDSIGHT_ROLE:-api}" in
   api)
     export HINDSIGHT_API_WORKER_ENABLED=false HINDSIGHT_ENABLE_CP=false

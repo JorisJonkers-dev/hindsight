@@ -23,10 +23,6 @@ restricted=(--network "$net" --user 1000:1000 --read-only --cap-drop ALL --secur
 
 docker run -d --name smoke-postgres --network "$net" -e POSTGRES_USER=hindsight \
   -e POSTGRES_PASSWORD='p@ss:w/rd' -e POSTGRES_DB=hindsight_db pgvector/pgvector:pg17 >/dev/null
-docker run -d --name smoke-tei "${restricted[@]}" --tmpfs '/data:uid=1000,gid=1000' \
-  -e MODEL_ID=sentence-transformers/all-MiniLM-L6-v2 -e PORT=8091 "$tei_image" >/dev/null
-docker run -d --name smoke-rerank "${restricted[@]}" --tmpfs '/data:uid=1000,gid=1000' \
-  -e MODEL_ID=cross-encoder/ms-marco-MiniLM-L-6-v2 -e PORT=8092 "$tei_image" >/dev/null
 
 db=(-e HINDSIGHT_DB_HOST=smoke-postgres -e HINDSIGHT_DB_PORT=5432 -e HINDSIGHT_DB_NAME=hindsight_db
   -e HINDSIGHT_DB_USER=hindsight -e 'HINDSIGHT_DB_PASSWORD=p@ss:w/rd'
@@ -58,19 +54,26 @@ wait_for() {
 until docker exec smoke-postgres pg_isready -U hindsight -d hindsight_db >/dev/null 2>&1; do sleep 2; done
 docker exec smoke-postgres psql -U hindsight -d hindsight_db -c 'CREATE EXTENSION IF NOT EXISTS vector' >/dev/null
 
-# TEI has no shell client of its own, so a curl container on the network asks for its health.
-for tei in smoke-tei:8091 smoke-rerank:8092; do
-  docker run --rm --network "$net" curlimages/curl:8.11.1 -fsS --retry 60 --retry-delay 5 \
-    --retry-all-errors -o /dev/null "http://${tei}/health" || { docker logs "${tei%%:*}" 2>&1 | tail -20; exit 1; }
-  echo "${tei%%:*} serves /health"
-done
-
+# The api and the worker start before TEI exists, as they do when a release restarts TEI
+# beside them: each waits for both TEI servers rather than exiting.
 docker run -d --name smoke-api "${restricted[@]}" "${db[@]}" -e HINDSIGHT_ROLE=api \
   -e HINDSIGHT_API_PORT=8888 "$api_image" >/dev/null
-wait_for smoke-api http://127.0.0.1:8888/health
-
 docker run -d --name smoke-worker "${restricted[@]}" "${db[@]}" -e HINDSIGHT_ROLE=worker \
   -e HINDSIGHT_API_WORKER_HTTP_PORT=8889 "$api_image" >/dev/null
+for waiting in smoke-api smoke-worker; do
+  until docker logs "$waiting" 2>&1 | grep -q 'hindsight-start: waiting for http://smoke-tei:8091/health'; do
+    [ "$(docker inspect -f '{{.State.Running}}' "$waiting")" = true ] \
+      || { docker logs "$waiting" 2>&1 | tail -20; echo "$waiting exited instead of waiting for TEI" >&2; exit 1; }
+    sleep 1
+  done
+  echo "$waiting waits for TEI"
+done
+
+docker run -d --name smoke-tei "${restricted[@]}" --tmpfs '/data:uid=1000,gid=1000' \
+  -e MODEL_ID=sentence-transformers/all-MiniLM-L6-v2 -e PORT=8091 "$tei_image" >/dev/null
+docker run -d --name smoke-rerank "${restricted[@]}" --tmpfs '/data:uid=1000,gid=1000' \
+  -e MODEL_ID=cross-encoder/ms-marco-MiniLM-L-6-v2 -e PORT=8092 "$tei_image" >/dev/null
+wait_for smoke-api http://127.0.0.1:8888/health
 wait_for smoke-worker http://127.0.0.1:8889/health
 
 docker run -d --name smoke-cp "${restricted[@]}" -e HINDSIGHT_DATAPLANE_HOST=smoke-api -e HINDSIGHT_DATAPLANE_PORT=8888 \
