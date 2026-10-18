@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/JorisJonkers-dev/hindsight/compare/v1.0.1...v1.0.2) (2026-10-18)
+
+
+### Bug Fixes
+
+* wait for both TEI servers before starting the api or the worker ([#6](https://github.com/JorisJonkers-dev/hindsight/issues/6)) ([cd90ffd](https://github.com/JorisJonkers-dev/hindsight/commit/cd90ffd60ea76a941734fbc0ede178214213fd92))
+
 ## [1.0.1](https://github.com/JorisJonkers-dev/hindsight/compare/v1.0.0...v1.0.1) (2026-10-17)
 
 
