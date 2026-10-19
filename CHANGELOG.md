@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/JorisJonkers-dev/hindsight/compare/v1.0.2...v1.0.3) (2026-10-19)
+
+
+### Bug Fixes
+
+* keep the api and the worker off the nodes that boot from an SD card ([#9](https://github.com/JorisJonkers-dev/hindsight/issues/9)) ([7836531](https://github.com/JorisJonkers-dev/hindsight/commit/78365315a796ec4f2e91c9f271e29ac55237c1ff))
+
 ## [1.0.2](https://github.com/JorisJonkers-dev/hindsight/compare/v1.0.1...v1.0.2) (2026-10-18)
 
 
