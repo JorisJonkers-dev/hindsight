@@ -50,6 +50,10 @@ applications:
     writablePaths: [/tmp]
     startupBudget: 300s # the api migrates the schema before it serves
     cutover: continuous
+    # The image is 1.4 GB. Pulling it onto a Pi's USB stick saturates the disk until
+    # the node goes NotReady, so a release's canary never comes up in time.
+    placement:
+      disk: { media: [ssd, nvme] }
 
     processes:
       - name: hindsight-api
