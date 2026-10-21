@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4](https://github.com/JorisJonkers-dev/hindsight/compare/v1.0.3...v1.0.4) (2026-10-21)
+
+
+### Bug Fixes
+
+* give the control plane time for a cold start on a Pi ([#13](https://github.com/JorisJonkers-dev/hindsight/issues/13)) ([3def2a4](https://github.com/JorisJonkers-dev/hindsight/commit/3def2a4a58ea44af6a4a699831182b1be4082bb3))
+
 ## [1.0.3](https://github.com/JorisJonkers-dev/hindsight/compare/v1.0.2...v1.0.3) (2026-10-19)
 
 
