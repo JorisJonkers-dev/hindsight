@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/JorisJonkers-dev/hindsight/compare/v1.0.4...v1.1.0) (2026-10-21)
+
+
+### Features
+
+* the images lock records each image's upstream version, and an upstream bump releases ([#15](https://github.com/JorisJonkers-dev/hindsight/issues/15)) ([c5f704f](https://github.com/JorisJonkers-dev/hindsight/commit/c5f704f29c403fe8776202fc79a81140e19d5554))
+
 ## [1.0.4](https://github.com/JorisJonkers-dev/hindsight/compare/v1.0.3...v1.0.4) (2026-10-21)
 
 
