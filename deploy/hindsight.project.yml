@@ -105,7 +105,7 @@ applications:
         probes:
           readiness: { tcp: 3000 }
           liveness: { tcp: 3000 }
-        startupBudget: 60s
+        startupBudget: 180s # a cold start on a Pi took over 60s on 2026-10-20
         cutover: continuous
 
   - id: hindsight-embedding
