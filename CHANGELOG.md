@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/JorisJonkers-dev/hindsight/compare/v1.1.0...v1.1.1) (2026-10-21)
+
+
+### Miscellaneous Chores
+
+* Renovate alone updates dependencies, so Dependabot's fallback goes ([#22](https://github.com/JorisJonkers-dev/hindsight/issues/22)) ([43b9f7a](https://github.com/JorisJonkers-dev/hindsight/commit/43b9f7a9069b31beb7d24af318af316b34b44c72))
+
 ## [1.1.0](https://github.com/JorisJonkers-dev/hindsight/compare/v1.0.4...v1.1.0) (2026-10-21)
 
 
