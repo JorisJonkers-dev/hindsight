@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/JorisJonkers-dev/hindsight/compare/v1.1.1...v1.1.2) (2026-10-30)
+
+
+### Bug Fixes
+
+* **deploy:** right-size hindsight-api's and tei-embedding's memory requests to their use ([#29](https://github.com/JorisJonkers-dev/hindsight/issues/29)) ([f64af6f](https://github.com/JorisJonkers-dev/hindsight/commit/f64af6fefb600f31afb769dba47ad5192447fadb))
+
 ## [1.1.1](https://github.com/JorisJonkers-dev/hindsight/compare/v1.1.0...v1.1.1) (2026-10-21)
 
 
