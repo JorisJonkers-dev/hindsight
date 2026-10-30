@@ -63,7 +63,7 @@ applications:
         provides:
           http: 8888
         placement:
-          memory: 1536Mi # the live pod uses about 500Mi
+          memory: 768Mi # the live pod uses about 420Mi
           cpu: 500m
         probes:
           readiness: { path: /health, port: 8888 }
@@ -117,7 +117,7 @@ applications:
         provides:
           http: 8091
         placement:
-          memory: 4Gi # the live pod uses about 2.8Gi
+          memory: 3Gi # the live pod uses about 2.2Gi
           cpu: 2000m
           arch: [amd64] # TEI's CPU image is published for amd64 only
         writablePaths: [/tmp]
