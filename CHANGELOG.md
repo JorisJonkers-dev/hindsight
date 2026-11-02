@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/JorisJonkers-dev/hindsight/compare/v1.1.2...v1.1.3) (2026-11-02)
+
+
+### Bug Fixes
+
+* **deploy:** reserve what hindsight-worker uses ([#32](https://github.com/JorisJonkers-dev/hindsight/issues/32)) ([488114e](https://github.com/JorisJonkers-dev/hindsight/commit/488114e83ba39df61cd06333a66ff5b0b41a7755))
+
 ## [1.1.2](https://github.com/JorisJonkers-dev/hindsight/compare/v1.1.1...v1.1.2) (2026-10-30)
 
 
