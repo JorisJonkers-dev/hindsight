@@ -76,7 +76,7 @@ applications:
         provides:
           worker: 8889
         placement:
-          memory: 1536Mi # the live pod uses about 500Mi
+          memory: 1Gi # peaked at 487Mi over 14 days (2026-11-02)
           cpu: 500m
         probes:
           readiness: { path: /health, port: 8889 }
