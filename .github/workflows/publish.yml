@@ -19,7 +19,7 @@ permissions: {}
 
 jobs:
   publish-hindsight:
-    uses: JorisJonkers-dev/github-workflows/.github/workflows/container-publish.yml@8aaf024208bf4b29acb468aecd3cd7ee130d5ac1 # v0.49.1
+    uses: JorisJonkers-dev/github-workflows/.github/workflows/container-publish.yml@48fcba8b143567e12716f4b77b9a3ab211719ffd # v0.50.1
     with:
       require-package-proxy: true
       image-name: hindsight
@@ -34,7 +34,7 @@ jobs:
       PACKAGES_PROXY_TOKEN: ${{ secrets.PACKAGES_PROXY_TOKEN }}
 
   publish-control-plane:
-    uses: JorisJonkers-dev/github-workflows/.github/workflows/container-publish.yml@8aaf024208bf4b29acb468aecd3cd7ee130d5ac1 # v0.49.1
+    uses: JorisJonkers-dev/github-workflows/.github/workflows/container-publish.yml@48fcba8b143567e12716f4b77b9a3ab211719ffd # v0.50.1
     with:
       require-package-proxy: true
       image-name: hindsight-control-plane
@@ -49,7 +49,7 @@ jobs:
       PACKAGES_PROXY_TOKEN: ${{ secrets.PACKAGES_PROXY_TOKEN }}
 
   publish-tei:
-    uses: JorisJonkers-dev/github-workflows/.github/workflows/container-publish.yml@8aaf024208bf4b29acb468aecd3cd7ee130d5ac1 # v0.49.1
+    uses: JorisJonkers-dev/github-workflows/.github/workflows/container-publish.yml@48fcba8b143567e12716f4b77b9a3ab211719ffd # v0.50.1
     with:
       require-package-proxy: true
       image-name: hindsight-tei
@@ -88,7 +88,7 @@ jobs:
       # The shared step also reads back the software version each image ships.
       - name: lock-images
         id: lock
-        uses: JorisJonkers-dev/github-workflows/actions/resolve-image-lock@8aaf024208bf4b29acb468aecd3cd7ee130d5ac1 # v0.49.1
+        uses: JorisJonkers-dev/github-workflows/actions/resolve-image-lock@48fcba8b143567e12716f4b77b9a3ab211719ffd # v0.50.1
         with:
           name: hindsight
           images: |
@@ -103,7 +103,7 @@ jobs:
       contents: read
       packages: write
       id-token: write
-    uses: JorisJonkers-dev/github-workflows/.github/workflows/publish-fragment.yml@8aaf024208bf4b29acb468aecd3cd7ee130d5ac1 # v0.49.1
+    uses: JorisJonkers-dev/github-workflows/.github/workflows/publish-fragment.yml@48fcba8b143567e12716f4b77b9a3ab211719ffd # v0.50.1
     with:
       require-package-proxy: true
       project-file: deploy/hindsight.project.yml
