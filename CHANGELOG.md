@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.4](https://github.com/JorisJonkers-dev/hindsight/compare/v1.1.3...v1.1.4) (2026-11-12)
+
+
+### Bug Fixes
+
+* **hygiene:** never cancel a run of the required hygiene checks ([#42](https://github.com/JorisJonkers-dev/hindsight/issues/42)) ([892958c](https://github.com/JorisJonkers-dev/hindsight/commit/892958cdf211a66e3e5f4da4b8cb0f42ae492d11))
+
 ## [1.1.3](https://github.com/JorisJonkers-dev/hindsight/compare/v1.1.2...v1.1.3) (2026-11-02)
 
 
